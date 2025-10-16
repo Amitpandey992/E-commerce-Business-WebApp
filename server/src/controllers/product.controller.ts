@@ -1,66 +1,71 @@
 import { Request, Response } from "express";
 import { Product } from "../models/product.model";
-import { BaseQueryType, NewProductBody, SearchProductsQuery } from "../types/types";
+import {
+    BaseQueryType,
+    NewProductBody,
+    SearchProductsQuery,
+} from "../types/types";
 import { ApiError } from "../utils/ApiError";
 import { asyncHandler } from "../utils/asyncHandler";
 import { deleteImage } from "../utils/cloudinary";
 import { faker } from "@faker-js/faker";
 // import { faker } from "@faker-js/faker";
 
-
 export const getLatestProducts = asyncHandler(
     async (req: Request, res: Response, next) => {
-
         const products = await Product.find().sort({ createdAt: -1 }).limit(5);
 
         return res.status(200).json({
             success: true,
-            products
+            products,
         });
-    }
-)
-
-export const getAllCategories = asyncHandler(
-    async (req: Request, res: Response, next) => {
-
-        const categories = await Product.distinct('category');
-
-        return res.status(200).json({
-            success: true,
-            categories
-        });
-
     }
 );
 
-export const getAllProducts = asyncHandler(async (req: Request, res: Response, next) => {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 8;
-    const skip = (page - 1) * limit;
+export const getAllCategories = asyncHandler(
+    async (req: Request, res: Response, next) => {
+        const categories = await Product.distinct("category");
 
-    const sortBy = req.query.sortBy ? JSON.parse(req.query.sortBy as string) : { id: '', desc: false };
-    let sort: any = {};
-
-    if (sortBy.id) {
-        sort[sortBy.id] = sortBy.desc ? -1 : 1;
+        return res.status(200).json({
+            success: true,
+            categories,
+        });
     }
+);
 
-    const totalProducts = await Product.countDocuments();
-    const products = await Product.find().sort(sort).skip(skip).limit(limit);
+export const getAllProducts = asyncHandler(
+    async (req: Request, res: Response, next) => {
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 8;
+        const skip = (page - 1) * limit;
 
-    return res.status(200).json({
-        success: true,
-        products,
-        totalProducts,
-        totalPages: Math.ceil(totalProducts / limit),
-        currentPage: page
-    });
-});
+        const sortBy = req.query.sortBy
+            ? JSON.parse(req.query.sortBy as string)
+            : { id: "", desc: false };
+        let sort: any = {};
 
+        if (sortBy.id) {
+            sort[sortBy.id] = sortBy.desc ? -1 : 1;
+        }
+
+        const totalProducts = await Product.countDocuments();
+        const products = await Product.find()
+            .sort(sort)
+            .skip(skip)
+            .limit(limit);
+
+        return res.status(200).json({
+            success: true,
+            products,
+            totalProducts,
+            totalPages: Math.ceil(totalProducts / limit),
+            currentPage: page,
+        });
+    }
+);
 
 export const getProductDetails = asyncHandler(
     async (req: Request, res: Response, next) => {
-
         const product = await Product.findById(req.params.id);
 
         if (!product) {
@@ -69,14 +74,13 @@ export const getProductDetails = asyncHandler(
 
         return res.status(200).json({
             success: true,
-            product
+            product,
         });
     }
 );
 
 export const createNewProduct = asyncHandler(
     async (req: Request<{}, {}, NewProductBody>, res: Response, next) => {
-
         const { name, category, price, stock, description } = req.body;
         console.log(req.body);
 
@@ -97,13 +101,13 @@ export const createNewProduct = asyncHandler(
             price,
             stock,
             photo: file.path,
-            photoPublicId: file.filename
+            photoPublicId: file.filename,
         });
 
         return res.status(201).json({
             success: true,
             message: "Product created successfully",
-            product
+            product,
         });
     }
 );
@@ -143,14 +147,18 @@ export const updateProduct = asyncHandler(
         return res.status(200).json({
             success: true,
             message: "Product updated successfully",
-            product: updatedProduct
+            product: updatedProduct,
         });
     }
 );
 
 export const searchProducts = asyncHandler(
-    async (req: Request<{}, {}, {}, SearchProductsQuery>, res: Response, next) => {
-        const { search, category, sort, price, page = '1' } = req.query;
+    async (
+        req: Request<{}, {}, {}, SearchProductsQuery>,
+        res: Response,
+        next
+    ) => {
+        const { search, category, sort, price, page = "1" } = req.query;
 
         const limit = Number(process.env.PRODUCTS_PER_PAGE) || 6;
         const skip = (Number(page) - 1) * limit;
@@ -158,7 +166,7 @@ export const searchProducts = asyncHandler(
         const baseQuery: BaseQueryType = {};
 
         if (search) {
-            baseQuery.name = { $regex: search, $options: 'i' };
+            baseQuery.name = { $regex: search, $options: "i" };
         }
 
         if (category) {
@@ -166,15 +174,15 @@ export const searchProducts = asyncHandler(
         }
 
         if (price) {
-            const [min, max] = price.split(',').map(Number);
+            const [min, max] = price.split(",").map(Number);
             baseQuery.price = {};
             if (min !== undefined) baseQuery.price.$gte = min;
             if (max !== undefined) baseQuery.price.$lte = max;
         }
 
         let sortOption: { [key: string]: 1 | -1 } = {};
-        if (sort && sort !== 'relevance') {
-            sortOption.price = sort === 'asc' ? 1 : -1;
+        if (sort && sort !== "relevance") {
+            sortOption.price = sort === "asc" ? 1 : -1;
         }
 
         const [products, totalProducts] = await Promise.all([
@@ -194,7 +202,6 @@ export const searchProducts = asyncHandler(
 
 export const deleteProduct = asyncHandler(
     async (req: Request, res: Response, next) => {
-
         const id = req.params.id;
 
         const product = await Product.findById(id);
@@ -210,7 +217,7 @@ export const deleteProduct = asyncHandler(
 
         return res.status(200).json({
             success: true,
-            message: "Product deleted successfully"
+            message: "Product deleted successfully",
         });
     }
 );
@@ -249,10 +256,7 @@ export const getFeaturedProducts = asyncHandler(
     }
 );
 
-
-
 // You can add more product details in a similar fashion.
-
 
 // const generateRandomProducts = async (count = 20) => {
 //     const products = [

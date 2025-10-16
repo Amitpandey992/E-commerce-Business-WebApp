@@ -13,34 +13,34 @@ export interface User {
 export type MessageResponse = {
     success: boolean;
     message: string;
-}
+};
 
 export type UserLoginResponse = {
     success: boolean;
     user: User;
     token: string;
-}
+};
 
 export type UserLoginRequest = {
     idToken: string;
-}
+};
 
 export type UserRegisterRequest = {
     idToken: string;
     name: string;
     gender: string;
-    dob: string
-}
+    dob: string;
+};
 
 export type AllUserResponse = {
     success: boolean;
     users: User[];
-}
+};
 
 export type UserResponse = {
     success: boolean;
     user: User;
-}
+};
 
 export interface UserReducerIntialState {
     user: User | null;
@@ -69,7 +69,6 @@ export interface ProductResponse {
     currentPage: number;
 }
 
-
 interface SortBy {
     id: string;
     desc: boolean;
@@ -84,35 +83,35 @@ export interface ProductRequest {
 // New Product
 export type NewProductRequest = {
     formData: FormData;
-}
+};
 
 // Product Details
 export type ProductDetailResponse = {
     success: boolean;
     product: Product;
-}
+};
 
 // Update Product
 export type UpdateProductRequest = {
     productId: string;
     formData: FormData;
-}
+};
 
 // Delete Product
 export type DeleteProductRequest = {
     productId: string;
-}
+};
 
-// Categories 
+// Categories
 export type CategoriesResponse = {
     success: boolean;
     categories: string[];
-}
+};
 
 // feature Product
 export type FeatureProductRequest = {
     productId: string;
-}
+};
 
 // Search Product
 export type SearchProductRequest = {
@@ -121,13 +120,13 @@ export type SearchProductRequest = {
     category: string;
     search: string;
     sort: string;
-}
+};
 
 export type SearchProductResponse = ProductResponse & {
     totalPage: number;
-}
+};
 
-// -- Order Types -- 
+// -- Order Types --
 // Cart Item
 export type CartItem = {
     productId: string;
@@ -146,19 +145,21 @@ export type ShippingInfo = {
     country: string;
     pinCode: string;
     phone: string;
-}
+};
 
 // Order Item
 export type OrderItem = Omit<CartItem, "stock"> & { _id: string };
 
-// Order 
+// Order
 export type Order = {
     orderItems: OrderItem[];
     shippingInfo: ShippingInfo;
-    subtotal: number;
+    subTotal: number;
     tax: number;
     shippingCharges: number;
     discount: number;
+    paymentMethod: string;
+    paymentStatus: string;
     total: number;
     status: string;
     user: {
@@ -168,21 +169,27 @@ export type Order = {
     _id: string;
     createdAt: string;
     updatedAt: string;
-}
+};
 
 // All Orders
 export type AllOrdersResponse = {
     success: boolean;
     orders: Order[];
-}
+    pagination: {
+        currentPage: number;
+        pageSize: number;
+        totalItems: number;
+        totalPages: number;
+    };
+};
 
 // Order Details
 export type OrderDetailsResponse = {
     success: boolean;
     order: Order;
-}
+};
 
-// New Order 
+// New Order
 export type NewOrderRequest = {
     orderItems: CartItem[];
     subTotal: number;
@@ -192,13 +199,19 @@ export type NewOrderRequest = {
     total: number;
     shippingInfo: ShippingInfo;
     userId: string;
-}
+    paymentMethod: string;
+    paymentStatus: string;
+};
 
 // Update Order
 export type UpdateOrderRequest = {
     orderId: string;
     status: string;
-}
+};
+export type UpdateOrderPaymentRequest = {
+    orderId: string;
+    paymentStatus: string;
+};
 
 //  -- Coupon Types --
 export type Coupon = {
@@ -207,35 +220,35 @@ export type Coupon = {
     _id: string;
     createdAt: string;
     updatedAt: string;
-}
+};
 
 export type AllCouponsResponse = {
     success: boolean;
     coupons: Coupon[];
-}
+};
 
 export type AllCouponsRequest = {
     page: number;
-}
+};
 
 export type ApplyCouponRequest = {
     code: string;
-}
+};
 
 export type ApplyCouponResponse = {
     success: boolean;
     coupon: Coupon;
     message: string;
-}
+};
 
 export type NewCouponRequest = {
     code: string;
     amount: number | string;
-}
+};
 
 export type DeleteCouponRequest = {
     couponId: string;
-}
+};
 
 interface Stats {
     totalRevenue: number;
@@ -271,8 +284,6 @@ export interface StatsResponse {
     stats: Stats;
 }
 
-
-
 // -- Reducer Types --
 
 // Cart Reducer Initial State
@@ -292,5 +303,5 @@ export type CustomError = {
     data: {
         message: string;
         success: boolean;
-    }
-}
+    };
+};

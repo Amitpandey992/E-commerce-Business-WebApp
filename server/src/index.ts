@@ -32,8 +32,6 @@ const app: Application = express();
 const PORT = process.env.PORT || 8000;
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
-connectDB();
-
 // Apply middlewares
 app.use(cors({ credentials: true, origin: CLIENT_URL }));
 app.use(helmet());
@@ -100,6 +98,9 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 app.use(apiErrorMiddleware);
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+
+connectDB().then(() =>
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    })
+);

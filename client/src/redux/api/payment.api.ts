@@ -1,8 +1,8 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-export interface CreateRazorpayOrderRequest { amount: number; }
+export interface CreateRazorpayOrderRequest { amount: number; orderId: string; }
 export interface CreateRazorpayOrderResponse { success: boolean; key: string; orderId: string; amount: number; currency: string; }
-export interface VerifyRazorpayPaymentRequest { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string; }
+export interface VerifyRazorpayPaymentRequest { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string; orderId: string; }
 export interface VerifyRazorpayPaymentResponse { success: boolean; }
 
 export const paymentApi = createApi({

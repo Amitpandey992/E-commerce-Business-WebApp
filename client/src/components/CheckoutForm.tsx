@@ -1,4 +1,3 @@
-/* Razorpay Checkout replaces Stripe Elements */
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -14,7 +13,6 @@ import { notify } from "../utils/util";
 import BackButton from "../components/common/BackBtn";
 import OtpPopup from "./OtpPopup";
 
-// Define the CheckoutForm component
 const CheckoutForm: React.FC = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -32,6 +30,7 @@ const CheckoutForm: React.FC = () => {
 
     const [paymentMethod, setPaymentMethod] = useState("");
     const [showOtpPopup, setShowOtpPopup] = useState(false);
+    const [orderId, setOrderId] = useState<string | null>(null); // Track pending order ID
     const [newOrder] = useNewOrderMutation();
     const [createRazorpayOrder] = useCreateRazorpayOrderMutation();
     const [verifyRazorpayPayment] = useVerifyRazorpayPaymentMutation();
@@ -54,6 +53,27 @@ const CheckoutForm: React.FC = () => {
         return fallback;
     };
 
+    // Create pending order first
+    const createPendingOrder = async (): Promise<string> => {
+        const orderData: Omit<NewOrderRequest, "paymentStatus"> = {
+            shippingCharges,
+            shippingInfo,
+            tax,
+            discount,
+            total,
+            subTotal,
+            orderItems: cartItems,
+            userId: user?._id,
+            paymentMethod,
+        };
+
+        const response = await newOrder(orderData as NewOrderRequest).unwrap();
+        if (!response.success)
+            throw new Error("Failed to create pending order");
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (response as any).orderId; // Assume backend returns { success: true, orderId }
+    };
+
     // Function to handle form submission
     const submitHandler = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -65,36 +85,19 @@ const CheckoutForm: React.FC = () => {
 
         setIsProcessing(true);
 
-        const orderData: NewOrderRequest = {
-            shippingCharges,
-            shippingInfo,
-            tax,
-            discount,
-            total,
-            subTotal,
-            orderItems: cartItems,
-            userId: user?._id,
-        };
+        try {
+            // Step 1: Create pending order for both flows
+            const pendingOrderId = await createPendingOrder();
+            setOrderId(pendingOrderId);
 
-        if (paymentMethod === "cod") {
-            setIsProcessing(false);
-            setShowOtpPopup(true);
-
-            try {
-                console.log("hello");
-            } catch (err: unknown) {
-                const message = extractMessage(
-                    err,
-                    "Payment verification failed"
-                );
-                notify(message, "error");
-            } finally {
+            if (paymentMethod === "Cod") {
+                setShowOtpPopup(true);
                 setIsProcessing(false);
-            }
-        } else {
-            try {
+            } else {
+                // Online: Create Razorpay with orderId
                 const razorpayOrder = await createRazorpayOrder({
                     amount: total,
+                    orderId: pendingOrderId, // Pass pending orderId
                 }).unwrap();
 
                 type RazorpayHandlerResponse = {
@@ -140,12 +143,13 @@ const CheckoutForm: React.FC = () => {
                                 razorpay_payment_id:
                                     response.razorpay_payment_id,
                                 razorpay_signature: response.razorpay_signature,
+                                orderId: pendingOrderId, // Pass for update
                             }).unwrap();
                             if (verifyRes.success) {
-                                await newOrder(orderData).unwrap();
-                                dispatch(resetCart());
+                                // Backend updated to 'Paid'/'Processing'
                                 notify("Order placed successfully", "success");
-                                navigate("/my-orders");
+                                dispatch(resetCart());
+                                window.location.href = "/my-orders";
                             } else {
                                 notify("Payment verification failed", "error");
                             }
@@ -175,15 +179,15 @@ const CheckoutForm: React.FC = () => {
                     options as unknown as Record<string, unknown>
                 );
                 rzp.open();
-            } catch (error: unknown) {
-                console.error(error);
-                const message = extractMessage(
-                    error,
-                    "Payment initialization failed"
-                );
-                notify(message, "error");
-                setIsProcessing(false);
             }
+        } catch (error: unknown) {
+            console.error(error);
+            const message = extractMessage(
+                error,
+                "Payment initialization failed"
+            );
+            notify(message, "error");
+            setIsProcessing(false);
         }
     };
 
@@ -200,7 +204,7 @@ const CheckoutForm: React.FC = () => {
                 >
                     <div className="text-center mb-6">
                         <h1 className="text-3xl font-extrabold text-blue-900 tracking-wide">
-                            ShopSpot
+                            RanisaBySword{" "}
                         </h1>
                         <p className="text-gray-500 text-sm mt-1">
                             Secure Checkout
@@ -229,8 +233,8 @@ const CheckoutForm: React.FC = () => {
                                 <input
                                     type="radio"
                                     name="paymentMethod"
-                                    value="online"
-                                    onChange={() => setPaymentMethod("online")}
+                                    value="Online"
+                                    onChange={() => setPaymentMethod("Online")}
                                     defaultChecked
                                     className="accent-blue-600"
                                 />
@@ -243,8 +247,8 @@ const CheckoutForm: React.FC = () => {
                                 <input
                                     type="radio"
                                     name="paymentMethod"
-                                    value="cod"
-                                    onChange={() => setPaymentMethod("cod")}
+                                    value="Cod"
+                                    onChange={() => setPaymentMethod("Cod")}
                                     className="accent-blue-600"
                                 />
                                 <span className="font-medium text-gray-700">
@@ -265,13 +269,13 @@ const CheckoutForm: React.FC = () => {
                     </button>
                 </form>
 
-                {showOtpPopup && (
+                {showOtpPopup && orderId && (
                     <OtpPopup
                         phone={shippingInfo?.phone}
+                        orderId={orderId} // Added: Pass orderId to popup
                         onClose={() => setShowOtpPopup(false)}
                         onVerified={async () => {
                             try {
-                                await newOrder(orderData).unwrap();
                                 dispatch(resetCart());
                                 notify(
                                     "Order placed successfully (COD)",
@@ -285,23 +289,10 @@ const CheckoutForm: React.FC = () => {
                                 );
                                 notify(message, "error");
                             }
+                            setShowOtpPopup(false);
                         }}
                     />
                 )}
-
-                {/* <div className="text-center mt-6 text-gray-500 text-sm">
-                    <p>
-                        Powered by{" "}
-                        <a
-                            href="https://razorpay.com"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-blue-600 font-semibold"
-                        >
-                            Razorpay
-                        </a>
-                    </p>
-                </div> */}
             </div>
         </>
     );

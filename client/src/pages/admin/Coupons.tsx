@@ -1,44 +1,54 @@
-import React, { useState } from 'react';
-import { useGetAllCouponsQuery, useCreateCouponMutation, useDeleteCouponMutation } from '../../redux/api/coupon.api';
-import { notify } from '../../utils/util';
-import dayjs from 'dayjs';
+import React, { useState } from "react";
+import {
+    useGetAllCouponsQuery,
+    useCreateCouponMutation,
+    useDeleteCouponMutation,
+} from "../../redux/api/coupon.api";
+import { notify } from "../../utils/util";
+import dayjs from "dayjs";
+import Loader from "../../components/common/Loader";
 
 const AdminCoupons: React.FC = () => {
-    const { data, refetch, isLoading: isFetchingCoupons, isError: fetchError } = useGetAllCouponsQuery();
+    const {
+        data,
+        refetch,
+        isLoading: isFetchingCoupons,
+        isError: fetchError,
+    } = useGetAllCouponsQuery();
     const [createCoupon] = useCreateCouponMutation();
     const [deleteCoupon] = useDeleteCouponMutation();
-    const [code, setCode] = useState('');
-    const [amount, setAmount] = useState<number | string>('');
+    const [code, setCode] = useState("");
+    const [amount, setAmount] = useState<number | string>("");
 
     const handleCreateCoupon = async () => {
         if (!code || !amount) {
-            notify('Please fill all fields', 'error');
+            notify("Please fill all fields", "error");
             return;
         }
 
         try {
             await createCoupon({ code, amount }).unwrap();
-            notify('Coupon created successfully', 'success');
-            setCode('');
-            setAmount('');
+            notify("Coupon created successfully", "success");
+            setCode("");
+            setAmount("");
             refetch();
         } catch (error) {
-            notify('Failed to create coupon', 'error');
+            notify("Failed to create coupon", "error");
         }
     };
 
     const handleDeleteCoupon = async (id: string) => {
         try {
-            console.log(id, 'id');
+            console.log(id, "id");
             await deleteCoupon(id).unwrap();
-            notify('Coupon deleted successfully', 'success');
+            notify("Coupon deleted successfully", "success");
             refetch();
         } catch (error) {
-            notify('Failed to delete coupon', 'error');
+            notify("Failed to delete coupon", "error");
         }
     };
 
-    if (isFetchingCoupons) return <p>Loading coupons...</p>;
+    if (isFetchingCoupons) return <Loader />;
     if (fetchError) return <p>Error loading coupons</p>;
 
     return (
@@ -80,22 +90,44 @@ const AdminCoupons: React.FC = () => {
                         <table className="min-w-full bg-white border border-gray-300 rounded-lg">
                             <thead className="bg-gray-100">
                                 <tr>
-                                    <th className="py-3 px-4 border-b border-gray-300 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Code</th>
-                                    <th className="py-3 px-4 border-b border-gray-300 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
-                                    <th className="py-3 px-4 border-b border-gray-300 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Created Date</th>
-                                    <th className="py-3 px-4 border-b border-gray-300 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                                    <th className="py-3 px-4 border-b border-gray-300 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">
+                                        Code
+                                    </th>
+                                    <th className="py-3 px-4 border-b border-gray-300 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">
+                                        Amount
+                                    </th>
+                                    <th className="py-3 px-4 border-b border-gray-300 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">
+                                        Created Date
+                                    </th>
+                                    <th className="py-3 px-4 border-b border-gray-300 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">
+                                        Actions
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {data?.coupons.map((coupon) => (
-                                    <tr key={coupon._id} className="hover:bg-gray-50">
-                                        <td className="py-3 px-4 border-b border-gray-300 text-sm">{coupon.code}</td>
-                                        <td className="py-3 px-4 border-b border-gray-300 text-sm">₹ {coupon.amount.toFixed(2)}</td>
-                                        <td className="py-3 px-4 border-b border-gray-300 text-sm">{dayjs(coupon.createdAt).format('DD/MM/YYYY')
-                                        }</td>
+                                    <tr
+                                        key={coupon._id}
+                                        className="hover:bg-gray-50"
+                                    >
+                                        <td className="py-3 px-4 border-b border-gray-300 text-sm">
+                                            {coupon.code}
+                                        </td>
+                                        <td className="py-3 px-4 border-b border-gray-300 text-sm">
+                                            ₹ {coupon.amount.toFixed(2)}
+                                        </td>
+                                        <td className="py-3 px-4 border-b border-gray-300 text-sm">
+                                            {dayjs(coupon.createdAt).format(
+                                                "DD/MM/YYYY"
+                                            )}
+                                        </td>
                                         <td className="py-3 px-4 border-b border-gray-300 text-sm">
                                             <button
-                                                onClick={() => handleDeleteCoupon(coupon._id)}
+                                                onClick={() =>
+                                                    handleDeleteCoupon(
+                                                        coupon._id
+                                                    )
+                                                }
                                                 className="bg-red-500 text-white px-4 py-2 rounded-md text-xs hover:bg-red-600 transition duration-300"
                                             >
                                                 Delete

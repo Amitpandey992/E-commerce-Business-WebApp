@@ -1,5 +1,3 @@
-// Minimal module declaration for 'razorpay' to calm TypeScript when types are absent
-declare module 'razorpay';
 import { Request } from 'express';
 import { Document } from 'mongoose';
 
@@ -67,4 +65,6 @@ export interface NewOrderRequestBody {
     discount: number;
     total: number;
     orderItems: OrderItemType[];
+    paymentMethod: 'Online' | 'Cod';
+    paymentStatus: 'Pending' | 'Paid' | 'Failed';
 }
