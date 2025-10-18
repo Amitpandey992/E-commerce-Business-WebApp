@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Login from "../components/auth/Login";
 import Signup from "../components/auth/Signup";
-import Illustration from "../assets/2672252.jpg"; // Ensure you have the illustration image
+// import Illustration from "../assets/2672252.jpg"; // Ensure you have the illustration image
 
 const AuthPage: React.FC = () => {
     const [isSignUp, setIsSignUp] = useState(false);
@@ -21,9 +21,9 @@ const AuthPage: React.FC = () => {
                         Your one-stop shop for all your needs
                     </p>
                     <img
-                        src={Illustration}
+                        src="https://images.pexels.com/photos/6394590/pexels-photo-6394590.jpeg"
                         alt="Illustration"
-                        className="object-cover"
+                        className="object-cover h-[70vh] w-full mt-4 rounded-lg shadow-lg"
                     />
                 </div>
                 {/* Right Side - Form */}

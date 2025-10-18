@@ -113,6 +113,7 @@ firebaseServiceAccountKey.json
 
 mergeProject.js
 project-merged.txt
+DEPLOYMENT.MD
 
 # Ignore cloudinary config file
 config/cloudinary.config.ts

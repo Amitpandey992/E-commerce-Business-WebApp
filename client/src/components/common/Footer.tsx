@@ -6,7 +6,7 @@ const Footer: React.FC = () => {
     return (
         <footer className="bg-blue-900 text-white py-10">
             <div className="container mx-auto px-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
                     {/* Company Info Section */}
                     <div className="text-center">
                         <h2 className="text-3xl font-bold ">RanisaBySword</h2>
@@ -53,29 +53,6 @@ const Footer: React.FC = () => {
                                 </i>
                             </a>
                         </div>
-                    </div>
-
-                    {/* Navigation Links Section */}
-                    {/* Find Product Links */}
-                    <div className="text-center">
-                        <h3 className="text-xl font-bold mb-2">Find product</h3>
-                        <ul className="space-y-1">
-                            <li className="text-sm hover:text-gray-400">
-                                <a href="#">Browse Arnold</a>
-                            </li>
-                            <li className="text-sm hover:text-gray-400">
-                                <a href="#">Chronograph Blue</a>
-                            </li>
-                            <li className="text-sm hover:text-gray-400">
-                                <a href="#">Smart Phones</a>
-                            </li>
-                            <li className="text-sm hover:text-gray-400">
-                                <a href="#">Automatic Watch</a>
-                            </li>
-                            <li className="text-sm hover:text-gray-400">
-                                <a href="#">Hair Straighteners</a>
-                            </li>
-                        </ul>
                     </div>
 
                     {/* Get Help Links */}

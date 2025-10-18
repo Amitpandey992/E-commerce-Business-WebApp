@@ -148,7 +148,9 @@ export const sendOtpForCod = asyncHandler(async (req, res, next) => {
 
         const apiKey = process.env.TWO_FACTOR_API_KEY;
 
-        const apiUrl = `https://2factor.in/API/V1/${apiKey}/SMS/AUTOGEN/+91${phone}/ranisabysword`;
+        const apiUrl = `https://2factor.in/API/V1/${apiKey}/SMS/+91${phone}/AUTOGEN/ranisabysword`;
+
+        // const apiUrl = `https://2factor.in/API/V1/${apiKey}/SMS/AUTOGEN/+91${phone}/ranisabysword`;
         const response = await fetch(apiUrl, { method: "GET" });
         const data = await response.json();
 
