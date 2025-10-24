@@ -1,12 +1,5 @@
-import Papa from "papaparse";
 import React, { useEffect, useMemo, useState } from "react";
-import {
-    FaArrowDown,
-    FaArrowUp,
-    FaEdit,
-    FaFileCsv,
-    FaPlus,
-} from "react-icons/fa";
+import { FaArrowDown, FaArrowUp, FaEdit, FaPlus } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import {
     Cell,
@@ -17,7 +10,11 @@ import {
     useSortBy,
     useTable,
 } from "react-table";
-import Pagination from "../../components/common/Pagination"; // Assuming you have a Pagination component
+
+type CustomColumn<T extends object> = Column<T> & {
+    disableSortBy?: boolean;
+};
+import Pagination from "../../components/common/Pagination";
 import SkeletonLoader from "../../components/common/SkeletonLoader";
 import { useAllProductsQuery } from "../../redux/api/product.api";
 import { CustomError, Product } from "../../types/api-types";
@@ -26,7 +23,7 @@ import { notify } from "../../utils/util";
 const AdminProducts: React.FC = () => {
     const navigate = useNavigate();
     const [page, setPage] = useState(1);
-    const [limit] = useState(8); // Items per page
+    const [limit] = useState(10);
     const [sortBy, setSortBy] = useState<{ id: string; desc: boolean }>({
         id: "",
         desc: false,
@@ -49,7 +46,12 @@ const AdminProducts: React.FC = () => {
     useEffect(() => {
         if (isError && error) {
             const err = error as CustomError;
-            notify(err.data.message, "error");
+            notify(
+                err?.data?.message ||
+                    (err as any)?.message ||
+                    "Failed to load products",
+                "error"
+            );
         }
     }, [isError, error]);
 
@@ -65,7 +67,7 @@ const AdminProducts: React.FC = () => {
                         className="w-16 h-16 object-cover rounded"
                     />
                 ),
-                disableSortBy: true, // Disable sorting for Image column
+                disableSortBy: true,
             },
             { Header: "Product", accessor: "name" },
             { Header: "Category", accessor: "category" },
@@ -83,7 +85,7 @@ const AdminProducts: React.FC = () => {
                         <FaEdit className="mr-2" /> Manage
                     </button>
                 ),
-                disableSortBy: true, // Disable sorting for Actions column
+                disableSortBy: true,
             },
         ],
         [navigate]
@@ -108,15 +110,6 @@ const AdminProducts: React.FC = () => {
 
     const handleRetry = () => {
         refetch();
-    };
-
-    const exportToCSV = () => {
-        const csvData = Papa.unparse(data);
-        const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "products.csv";
-        link.click();
     };
 
     if (isLoading) {
@@ -159,12 +152,6 @@ const AdminProducts: React.FC = () => {
                     >
                         <FaPlus className="mr-2" /> Add Product
                     </button>
-                    <button
-                        onClick={exportToCSV}
-                        className="flex items-center text-white bg-green-600 px-4 py-2 rounded-md hover:bg-green-700 transition"
-                    >
-                        <FaFileCsv className="mr-2" /> Export to CSV
-                    </button>
                 </div>
             </div>
             {data.length === 0 ? (
@@ -196,24 +183,39 @@ const AdminProducts: React.FC = () => {
                                                 (column, columnIndex) => {
                                                     const colInstance =
                                                         column as ColumnInstance<Product>;
+                                                    const sortToggleProps =
+                                                        typeof (
+                                                            colInstance as any
+                                                        )
+                                                            .getSortByToggleProps ===
+                                                        "function"
+                                                            ? (
+                                                                  colInstance as any
+                                                              ).getSortByToggleProps()
+                                                            : {};
                                                     const {
                                                         key: columnKey,
                                                         ...restHeaderProps
                                                     } =
                                                         colInstance.getHeaderProps(
-                                                            colInstance.getSortByToggleProps()
+                                                            sortToggleProps as any
                                                         );
                                                     return (
                                                         <th
-                                                            key={columnIndex} // Use index as key
-                                                            {...restHeaderProps} // Spread the rest of the props
+                                                            key={columnIndex}
+                                                            {...restHeaderProps}
                                                             className={`p-2 border-b cursor-pointer ${
-                                                                colInstance.isSorted
+                                                                (
+                                                                    colInstance as any
+                                                                ).isSorted
                                                                     ? "bg-blue-50"
                                                                     : ""
                                                             }`}
                                                             onClick={() =>
-                                                                !colInstance.disableSortBy &&
+                                                                !(
+                                                                    colInstance as CustomColumn<Product>
+                                                                )
+                                                                    .disableSortBy &&
                                                                 handleSort(
                                                                     colInstance.id
                                                                 )
@@ -223,8 +225,13 @@ const AdminProducts: React.FC = () => {
                                                                 {colInstance.render(
                                                                     "Header"
                                                                 )}
-                                                                {colInstance.isSorted ? (
-                                                                    colInstance.isSortedDesc ? (
+                                                                {(
+                                                                    colInstance as any
+                                                                ).isSorted ? (
+                                                                    (
+                                                                        colInstance as any
+                                                                    )
+                                                                        .isSortedDesc ? (
                                                                         <FaArrowDown className="ml-2 text-blue-600" />
                                                                     ) : (
                                                                         <FaArrowUp className="ml-2 text-blue-600" />

@@ -16,11 +16,17 @@
     "postinstall": "npm run build",
     "test": "echo \"No tests specified\" && exit 0"
   },
-  "keywords": ["ecommerce", "mern", "api", "ranisabysword"],
+  "keywords": [
+    "ecommerce",
+    "mern",
+    "api",
+    "ranisabysword"
+  ],
   "author": "RanisaBySword",
   "license": "ISC",
   "dependencies": {
     "@faker-js/faker": "^8.4.1",
+    "@types/nodemailer": "^7.0.2",
     "@types/stripe": "^8.0.417",
     "bcrypt": "^5.1.1",
     "cloudinary": "^1.41.3",
@@ -39,6 +45,7 @@
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "multer-storage-cloudinary": "^4.0.0",
+    "nodemailer": "^7.0.10",
     "path": "^0.12.7",
     "razorpay": "^2.9.5",
     "stripe": "^15.10.0",

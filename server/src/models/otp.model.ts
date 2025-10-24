@@ -1,16 +1,14 @@
 import mongoose from "mongoose";
 
-const otpSchema = new mongoose.Schema(
-    {
-        phoneNumber: {
-            type: String,
-        },
-        otp: {
-            type: String,
-        },
+const otpSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
     },
-    { timestamps: true }
-);
+    email: String,
+    otp: String,
+    createdAt: { type: Date, default: Date.now, expires: 300 },
+});
 
 const Otp = mongoose.model("Otp", otpSchema);
 

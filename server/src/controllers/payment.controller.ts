@@ -6,6 +6,11 @@ import Otp from "../models/otp.model";
 import bcrypt from "bcrypt";
 import Order from "../models/order.model";
 import { reduceStock } from "../utils/utils";
+import { RequestWithUser } from "../types/types";
+import {
+    orderConfirmationNodemailer,
+    sendOtpWithNodemailer,
+} from "../config/nodemailer";
 
 // Helper: Update order's paymentStatus and status based on payment outcome
 const updateOrderPaymentStatus = async (
@@ -139,48 +144,55 @@ export const verifyRazorpayPayment = asyncHandler(async (req, res) => {
     });
 });
 
-export const sendOtpForCod = asyncHandler(async (req, res, next) => {
-    try {
-        const { phone } = req.body;
-        if (!phone) {
-            return next(new ApiError(400, "Phone number is required"));
+export const sendOtpForCod = asyncHandler(
+    async (req: RequestWithUser, res, next) => {
+        try {
+            const { email } = req.body;
+            if (!email) {
+                return next(new ApiError(400, "Email is required"));
+            }
+            const twentyFourHoursAgo = new Date(
+                Date.now() - 24 * 60 * 60 * 1000
+            );
+            const otpCount = await Otp.countDocuments({
+                email,
+                createdAt: { $gte: twentyFourHoursAgo },
+            });
+
+            if (otpCount >= 3) {
+                return {
+                    success: false,
+                    data: null,
+                    message:
+                        "OTP limit exceeded. You can only request 3 OTPs per day.",
+                };
+            }
+
+            await Otp.deleteMany({ user: req.user._id, email });
+
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+            const hashedOtp = await bcrypt.hash(otp, 10);
+
+            await Otp.create({ user: req.user._id, email, otp: hashedOtp });
+
+            sendOtpWithNodemailer(email, otp);
+
+            return res.status(200).json({
+                success: true,
+                message: "OTP sent successfully",
+            });
+        } catch (error) {
+            return res.status(400).json({
+                success: false,
+                message: error?.response?.data?.message || error.message,
+            });
         }
-
-        const apiKey = process.env.TWO_FACTOR_API_KEY;
-
-        const apiUrl = `https://2factor.in/API/V1/${apiKey}/SMS/+91${phone}/AUTOGEN/ranisabysword`;
-
-        // const apiUrl = `https://2factor.in/API/V1/${apiKey}/SMS/AUTOGEN/+91${phone}/ranisabysword`;
-        const response = await fetch(apiUrl, { method: "GET" });
-        const data = await response.json();
-
-        console.log("2Factor API Response:", data);
-
-        if (data.Status !== "Success") {
-            throw new Error("Failed to send OTP via SMS");
-        }
-
-        await Otp.create({
-            phoneNumber: phone,
-            otp: data.Details, // Save sessionId
-        });
-
-        return res.status(200).json({
-            success: true,
-            message: "OTP sent successfully",
-            data: data.Details,
-        });
-    } catch (error) {
-        return res.status(400).json({
-            success: false,
-            message: error?.response?.data?.message || error.message,
-        });
     }
-});
+);
 
 export const verifyOtpForCod = asyncHandler(async (req, res, next) => {
     try {
-        const { phone, otp, orderId } = req.body;
+        const { email, otp, orderId } = req.body;
 
         if (!orderId) {
             throw new ApiError(400, "Order ID required for COD verification");
@@ -190,11 +202,11 @@ export const verifyOtpForCod = asyncHandler(async (req, res, next) => {
             throw new ApiError(404, "Order not found");
         }
 
-        if (!phone || !otp) {
+        if (!email || !otp) {
             return next(new ApiError(400, "All fields are required"));
         }
 
-        const record = await Otp.findOne({ phoneNumber: phone }).sort({
+        const record = await Otp.findOne({ email }).sort({
             createdAt: -1,
         });
 
@@ -204,18 +216,11 @@ export const verifyOtpForCod = asyncHandler(async (req, res, next) => {
             return next(new ApiError(400, "Otp not found"));
         }
 
-        const apiKey = process.env.TWO_FACTOR_API_KEY;
-
-        const verifyUrl = `https://2factor.in/API/V1/${apiKey}/SMS/VERIFY/${record.otp}/${otp}`;
-        const response = await fetch(verifyUrl, { method: "GET" });
-        const data = await response.json();
-
-        console.log("OTP verify response:", data);
-
-        if (data.Status !== "Success") {
+        const isOtpValid = await bcrypt.compare(otp, record.otp);
+        if (!isOtpValid) {
             order.paymentStatus = "Failed";
             await order.save();
-            return next(new ApiError(400, "Invalid or expired OTP"));
+            return next(new ApiError(400, "Invalid OTP"));
         }
 
         // Build custom confirmation message
@@ -224,29 +229,8 @@ export const verifyOtpForCod = asyncHandler(async (req, res, next) => {
             .join(", ");
         const totalMessage = `Your order #${orderId} placed successfully via COD! Items: ${itemsMessage}. Total: ₹${order.total}. Thank you!`;
 
-        // Send custom SMS via 2factor.in
-        const smsApiKey = process.env.TWO_FACTOR_API_KEY;
-        const smsUrl = `https://2factor.in/API/V1/${smsApiKey}/ADDON_SERVICES/SEND/TSMS`;
-        const smsResponse = await fetch(smsUrl, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                From: "ranisa", // Replace with your registered Sender ID
-                To: `+91${phone}`,
-                Msg: totalMessage,
-                SendAt: "", // Immediate send (empty for now)
-            }),
-        });
+        await orderConfirmationNodemailer(email, orderId, totalMessage);
 
-        const smsData = await smsResponse.json();
-        console.log("SMS Confirmation Response:", smsData);
-
-        if (smsData.Status !== "Success") {
-            console.error("SMS send failed:", smsData);
-            // Don't throw error – order is still successful, SMS is secondary
-        }
         order.paymentMethod = "Cod"; // Explicitly set to COD
         await order.save();
         const updatedOrder = await updateOrderPaymentStatus(

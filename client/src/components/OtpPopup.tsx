@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { notify } from "../utils/util";
+import { useSelector } from "react-redux";
+import { RootState } from "../redux/store";
 
 interface OtpPopupProps {
     phone: string;
@@ -16,11 +18,14 @@ const OtpPopup: React.FC<OtpPopupProps> = ({
     onClose,
     onVerified,
 }) => {
+    const { user } = useSelector((state: RootState) => state.user);
     const [otp, setOtp] = useState("");
     const [sent, setSent] = useState(false);
     const [loading, setLoading] = useState(false);
     const [loadingForResend, setLoadingForResend] = useState(false);
     const [resendTimer, setResendTimer] = useState(0);
+
+    console.log("User email from Redux:", user?.email);
 
     // 🕒 countdown for resend
     useEffect(() => {
@@ -33,7 +38,9 @@ const OtpPopup: React.FC<OtpPopupProps> = ({
     const sendOtp = async () => {
         try {
             setLoading(true);
-            await axios.post("/api/v1/payments/order/cod/send-otp", { phone });
+            await axios.post("/api/v1/payments/order/cod/send-otp", {
+                email: user?.email,
+            });
             notify("OTP sent successfully!", "success");
             setSent(true);
             setResendTimer(60); // 60 seconds cooldown
@@ -70,7 +77,7 @@ const OtpPopup: React.FC<OtpPopupProps> = ({
         try {
             setLoading(true);
             await axios.post("/api/v1/payments/order/cod/verify-otp", {
-                phone,
+                email: user?.email,
                 otp,
                 orderId,
             });
@@ -94,9 +101,9 @@ const OtpPopup: React.FC<OtpPopupProps> = ({
                 {!sent ? (
                     <>
                         <p className="text-gray-600 text-center mb-4">
-                            We’ll send an OTP to your phone number:
-                            <span className="font-medium text-gray-800 block mt-1">
-                                +91 {phone}
+                            We’ll send an OTP to your Email:
+                            <span className="font-normal text-gray-800 block mt-1 text-sm underline">
+                                {user?.email}
                             </span>
                         </p>
                         <button
@@ -110,12 +117,29 @@ const OtpPopup: React.FC<OtpPopupProps> = ({
                 ) : (
                     <>
                         <input
-                            type="text"
+                            type="number"
+                            inputMode="numeric"
                             maxLength={6}
                             placeholder="Enter OTP"
                             value={otp}
-                            onChange={(e) => setOtp(e.target.value)}
+                            onChange={(e) => {
+                                if (e.target.value.length <= 6)
+                                    setOtp(e.target.value);
+                            }}
                             className="w-full border border-gray-300 rounded-lg p-2 text-center text-lg tracking-widest mb-4"
+                            onWheel={(e: React.WheelEvent<HTMLInputElement>) =>
+                                e.currentTarget.blur()
+                            }
+                            onKeyDown={(
+                                e: React.KeyboardEvent<HTMLInputElement>
+                            ) => {
+                                if (
+                                    e.key === "ArrowUp" ||
+                                    e.key === "ArrowDown"
+                                ) {
+                                    e.preventDefault();
+                                }
+                            }}
                         />
 
                         <button
