@@ -16,6 +16,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          cache-dependency-glob: '**/package-lock.json'  # Fix: Monorepo subfolders scan karega
 
       # Optional build step (for TypeScript backend)
       - name: Install & Build Backend
@@ -33,7 +34,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            set -e
+            set -e  # Fail on any error
             cd /app/E-commerce-Business-WebApp/server || exit 1
             echo "📦 Pulling latest backend code..."
             git pull origin main
@@ -58,6 +59,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          cache-dependency-glob: '**/package-lock.json'  # Fix: Monorepo frontend subfolder
 
       - name: Install & Build Frontend
         run: |
@@ -71,8 +73,9 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: "client/dist/*"
-          target: "/var/www/html/ecommerce-frontend"
+          source: "client/dist/*"  # Build output
+          target: "/var/www/html/ecommerce-frontend"  # VPS path
+          strip_components: 0  # Fix: dist/* direct root mein copy (no subfolder)
 
       - name: Restart Nginx
         uses: appleboy/ssh-action@v1.0.3
@@ -81,5 +84,5 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            sudo systemctl reload nginx
+            sudo systemctl reload nginx  # Reload instead of restart (faster, no downtime)
             echo "✅ Frontend deployed successfully!"
