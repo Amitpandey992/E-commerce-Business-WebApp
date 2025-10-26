@@ -1,0 +1,85 @@
+name: Deploy Full MERN App (Backend + Frontend)
+
+on:
+  push:
+    branches: [ main ]  # Trigger only when pushing to main
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # Optional build step (for TypeScript backend)
+      - name: Install & Build Backend
+        run: |
+          cd server
+          npm ci
+          if [ -f "tsconfig.json" ]; then
+            npm run build
+          fi
+
+      - name: Deploy Backend to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            cd /app/E-commerce-Business-WebApp/server || exit 1
+            echo "📦 Pulling latest backend code..."
+            git pull origin main
+            npm ci
+            if [ -f "tsconfig.json" ]; then
+              npm run build
+            fi
+            echo "🚀 Restarting PM2 process..."
+            pm2 restart ecommerce-backend || pm2 start npm --name "ecommerce-backend" -- start
+            pm2 save
+            echo "✅ Backend deployed successfully!"
+
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install & Build Frontend
+        run: |
+          cd client
+          npm ci
+          npm run build
+
+      - name: Deploy Frontend to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "client/dist/*"
+          target: "/var/www/html/ecommerce-frontend"
+
+      - name: Restart Nginx
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            sudo systemctl reload nginx
+            echo "✅ Frontend deployed successfully!"

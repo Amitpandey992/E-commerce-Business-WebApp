@@ -10,8 +10,6 @@ import compression from "compression";
 import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
 import path from "path";
-import { cloudinary } from "./config/cloudinary.config";
-
 import connectDB from "./config/db.config";
 import firebaseApp from "./config/firebase.config";
 
@@ -29,26 +27,12 @@ firebaseApp.firestore();
 
 const app: Application = express();
 
-const PORT = process.env.PORT || 8000;
+const PORT: any = process.env.PORT || 8000;
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
 // Apply middlewares
 app.use(cors({ credentials: true, origin: CLIENT_URL }));
 app.use(helmet());
-// app.use(
-//     helmet.contentSecurityPolicy({
-//         directives: {
-//             defaultSrc: ["'self'"],
-//             scriptSrc: ["'self'", "https://apis.google.com"],
-//             connectSrc: ["'self'", "https://apis.google.com"],
-//             frameSrc: ["'self'", "https://accounts.google.com", "https://final-ecommerce-ad41b.firebaseapp.com"], // Add Firebase domain
-//             imgSrc: ["'self'", "https://www.gstatic.com", "https://*.googleusercontent.com"],
-//             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-//             fontSrc: ["'self'", "https://fonts.gstatic.com"],
-//         },
-//     })
-// );
-// app.use(helmet.crossOriginOpenerPolicy({ policy: "same-origin-allow-popups" })); // Add this line
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -97,10 +81,8 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 app.use(apiErrorMiddleware);
 
-// Start server
-
 connectDB().then(() =>
-    app.listen(PORT, () => {
+    app.listen(PORT, "0.0.0.0", () => {
         console.log(`Server running on port ${PORT}`);
     })
 );
