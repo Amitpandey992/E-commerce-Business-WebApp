@@ -65,7 +65,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     />
                 </div>
 
-                {/* Product name */}
                 <h3 className="text-xl font-bold mb-2 text-center">
                     {product.name}
                 </h3>
