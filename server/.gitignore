@@ -144,7 +144,6 @@ ehthumbs.db
 .history/
 
 # npm package versions
-package-lock.json
 yarn.lock
 
 # Compiled files
