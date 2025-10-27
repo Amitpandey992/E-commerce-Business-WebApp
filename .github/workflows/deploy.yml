@@ -2,7 +2,7 @@ name: Deploy Full MERN App (Backend + Frontend)
 
 on:
   push:
-    branches: [ main ]  # Trigger only when pushing to main
+    branches: [ main ]
 
 jobs:
   deploy-backend:
@@ -16,9 +16,8 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-glob: '**/package-lock.json'  # Fix: Monorepo subfolders scan karega
+          cache-dependency-path: '**/package-lock.json'  
 
-      # Optional build step (for TypeScript backend)
       - name: Install & Build Backend
         run: |
           cd server
@@ -34,7 +33,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            set -e  # Fail on any error
+            set -e
             cd /app/E-commerce-Business-WebApp/server || exit 1
             echo "📦 Pulling latest backend code..."
             git pull origin main
@@ -59,7 +58,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-glob: '**/package-lock.json'  # Fix: Monorepo frontend subfolder
+          cache-dependency-path: '**/package-lock.json'  
 
       - name: Install & Build Frontend
         run: |
@@ -73,9 +72,9 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: "client/dist/*"  # Build output
-          target: "/var/www/html/ecommerce-frontend"  # VPS path
-          strip_components: 0  # Fix: dist/* direct root mein copy (no subfolder)
+          source: "client/dist/*"
+          target: "/var/www/html/ecommerce-frontend"
+          strip_components: 0
 
       - name: Restart Nginx
         uses: appleboy/ssh-action@v1.0.3
@@ -84,5 +83,5 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            sudo systemctl reload nginx  # Reload instead of restart (faster, no downtime)
+            sudo systemctl reload nginx
             echo "✅ Frontend deployed successfully!"
