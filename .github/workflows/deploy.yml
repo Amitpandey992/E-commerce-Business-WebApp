@@ -16,7 +16,14 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'  
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Download Firebase Service Account Key
+        env:
+          FIREBASE_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        run: |
+          cd server
+          echo "$FIREBASE_KEY" > firebaseServiceAccountKey.json
 
       - name: Install & Build Backend
         run: |
@@ -58,7 +65,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'  
+          cache-dependency-path: '**/package-lock.json'
 
       - name: Install & Build Frontend
         run: |
