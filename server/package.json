@@ -7,7 +7,7 @@
     "start": "npx tsc && node build/index.js",
     "dev": "nodemon --exec ts-node src/index.ts",
     "build": "npm run clean && tsc -p .",
-    "clean": "rm -rf build",
+    "clean": "rimraf build",
     "production": "NODE_ENV=production node build/index.js",
     "pm2:start": "pm2 start ecosystem.config.js --env production",
     "pm2:stop": "pm2 stop all",
@@ -63,6 +63,7 @@
     "@types/node": "^20.14.2",
     "@types/validator": "^13.11.10",
     "nodemon": "^3.1.2",
+    "rimraf": "^5.0.10",
     "ts-node": "^10.9.2"
   }
 }
