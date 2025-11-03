@@ -59,16 +59,26 @@ app.use("/api/v1/payments", paymentRoutes);
 app.use("/api/v1/stats", statsRoutes);
 
 // Serve static files (should be placed after API routes)
-if (process.env.NODE_ENV === "production") {
-    app.use(express.static(path.join(__dirname, "../client/dist")));
-    app.get("*", (req: Request, res: Response) => {
-        res.sendFile(path.join(__dirname, "../client/dist", "index.html"));
-    });
-} else if (process.env.NODE_ENV === "development") {
-    app.get("/", (req: Request, res: Response) => {
-        res.send("API is running... 🚀 [Development Mode]");
-    });
-}
+// if (process.env.NODE_ENV === "production") {
+//     app.use(express.static(path.join(__dirname, "../client/dist")));
+//     app.get("*", (req: Request, res: Response) => {
+//         res.sendFile(path.join(__dirname, "../client/dist", "index.html"));
+//     });
+// } else if (process.env.NODE_ENV === "development") {
+//     app.get("/", (req: Request, res: Response) => {
+//         res.send("API is running... 🚀 [Development Mode]");
+//     });
+// }
+
+app.use(express.static(path.join(__dirname, "../client/dist")));
+
+app.get("/", (req, res) => {
+    res.send("API is running... 🚀 [Development Mode]");
+});
+
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../client/dist", "index.html"));
+});
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
