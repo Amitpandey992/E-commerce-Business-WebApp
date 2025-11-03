@@ -72,6 +72,7 @@ jobs:
           cd client
           npm ci
           npm run build
+          cp -r public/* dist/
 
       - name: Deploy Frontend to VPS
         uses: appleboy/scp-action@v0.1.7
