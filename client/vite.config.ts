@@ -11,6 +11,7 @@ export default defineConfig({
         main: resolve(__dirname, "index.html"),
       },
     },
+    copyPublicDir: true,
   },
   publicDir: "public",
   server: {
