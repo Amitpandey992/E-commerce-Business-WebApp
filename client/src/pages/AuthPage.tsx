@@ -21,7 +21,7 @@ const AuthPage: React.FC = () => {
                         Your one-stop shop for all your needs
                     </p>
                     <img
-                        src="https://images.pexels.com/photos/6394590/pexels-photo-6394590.jpeg"
+                        src="/authJewellery.jpeg"
                         alt="Illustration"
                         className="object-cover h-[70vh] w-full mt-4 rounded-lg shadow-lg"
                     />
